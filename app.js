@@ -1,4 +1,4 @@
-// v0.5.3a app.js
+// v0.5.3b app.js — true two-sided feed
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const euro = n => '€'+n;
@@ -13,21 +13,17 @@ const PLACES = ["Duomo","Navigli","Porta Nuova","Brera","Stazione Centrale","Par
 const LS_TASKS='d4m_tasks_v052';
 const LS_STATS='d4m_stats_v052';
 const LS_PROFILE='d4m_profile_v052';
-const LS_FLAGS='d4m_flags_v053a';
 
 let FEED=[]; let myTasks=[]; let waitTimer=null; let stats={done:0,total:0,level:1}; let lastOffer=null;
-let flags={runner:false};
 
 function saveTasks(){ try{ localStorage.setItem(LS_TASKS, JSON.stringify(myTasks)); }catch(e){} }
 function saveStats(){ try{ localStorage.setItem(LS_STATS, JSON.stringify(stats)); }catch(e){} }
 function saveProfile(){ try{ const p={ name: $('#nameDisplay').textContent, avatar: $('#avatarBtn').textContent }; localStorage.setItem(LS_PROFILE, JSON.stringify(p)); }catch(e){} }
-function saveFlags(){ try{ localStorage.setItem(LS_FLAGS, JSON.stringify(flags)); }catch(e){} }
 function loadPersisted(){
   try{
     const t=JSON.parse(localStorage.getItem(LS_TASKS)||'[]'); if(Array.isArray(t)){ myTasks=t; renderMyTasks(); }
     const s=JSON.parse(localStorage.getItem(LS_STATS)||'null'); if(s){ stats=s; updateStats(); }
     const p=JSON.parse(localStorage.getItem(LS_PROFILE)||'null'); if(p){ if(p.name) $('#nameDisplay').textContent=p.name; if(p.avatar) $('#avatarBtn').textContent=p.avatar; }
-    const f=JSON.parse(localStorage.getItem(LS_FLAGS)||'null'); if(f){ flags=f; }
   }catch(e){}
 }
 
@@ -46,7 +42,7 @@ function makeTask(id){
   const time = tag==='urgent' ? '30 min' : choice(['45 min','1 h','2 h','—']);
   const dist = choice([0.6, 1.2, 2.5, 3.8]).toFixed(1);
   const area = choice(["Duomo","Brera","Navigli","Isola"]) + ", Milano";
-  return { id, name, price, time, tag, dist, emoji: choice(EMOJI), text, area };
+  return { id, name, price, time, tag, dist, emoji: choice(EMOJI), text, area, assigned:false };
 }
 
 function renderFeed(items){
@@ -57,15 +53,13 @@ function renderFeed(items){
 function feedCard(card){
   const div=document.createElement('div');
   div.className='feed-card';
-  const actions = flags.runner
-    ? `<button class="outline small act-accept" data-id="${card.id}" type="button">Accetta incarico</button>`
-    : `<button class="outline small act-copy" data-text="${card.text}" type="button">Chiedi anche tu</button>`;
+  const disabled = card.assigned ? 'disabled' : '';
   div.innerHTML = `
     <div class="feed-head">
       <div class="avatar">${card.emoji}</div>
       <div class="feed-user">
         <div class="name">${card.name}</div>
-        <div class="meta">${card.dist} km • ${card.tag.toUpperCase()}</div>
+        <div class="meta">${card.area} • ${card.dist} km • ${card.tag.toUpperCase()}</div>
       </div>
     </div>
     <div class="feed-media">${card.emoji}</div>
@@ -73,20 +67,21 @@ function feedCard(card){
       <div class="feed-title">${card.text}</div>
       <div class="feed-meta"><span>${euro(card.price)}</span><span>${card.time}</span></div>
       <div class="feed-actions">
-        ${actions}
+        <button class="outline small act-accept" data-id="${card.id}" type="button" ${disabled}>Accetta incarico</button>
+        <button class="ghost small act-copy" data-text="${card.text}" type="button">Chiedi anche tu</button>
       </div>
     </div>`;
-  const copyBtn = div.querySelector('.act-copy');
-  if(copyBtn){
-    copyBtn.addEventListener('click',(e)=>{
-      $('#reqText').value = e.target.dataset.text;
-      show('tasks'); $('#reqText').focus();
-    });
-  }
-  const acceptBtn = div.querySelector('.act-accept');
-  if(acceptBtn){
-    acceptBtn.addEventListener('click',()=> acceptFromFeed(card));
-  }
+  div.querySelector('.act-copy').addEventListener('click',(e)=>{
+    $('#reqText').value=e.target.dataset.text; show('tasks'); $('#reqText').focus();
+  });
+  div.querySelector('.act-accept').addEventListener('click',()=>{
+    if(card.assigned) return;
+    card.assigned = true;
+    acceptFromFeed(card);
+    const btn = div.querySelector('.act-accept');
+    btn.textContent = "Assegnato";
+    btn.disabled = true;
+  });
   return div;
 }
 
@@ -171,14 +166,12 @@ function startTracking(task){
   setTimeout(advance, 500);
 }
 
-// Accept from feed (Runner Mode)
+// Accept from feed — always available
 function acceptFromFeed(card){
-  showToast("Hai accettato l'incarico dal feed ✔️");
+  showToast("Hai accettato l'incarico ✔️");
   lastOffer = { provider: "Tu (Runner)", price: card.price, eta: card.time };
-  // Create a pseudo task to track
   const t = { id:Date.now(), text: card.text+" — (dal feed)", status:'accepted', price: card.price, provider:"Tu (Runner)" };
   myTasks.unshift(t); renderMyTasks();
-  // Open tracking flow
   openModal('modalTrack');
   $('#trackMeta').textContent = `Incarico: "${card.text}" • ${euro(card.price)} • Assegnato a te`;
   const steps=[$('#st1'),$('#st2'),$('#st3')]; steps.forEach(s=>s.classList.remove('active'));
@@ -215,7 +208,6 @@ function show(tab){ $$('.screen').forEach(x=>x.classList.remove('active')); $('#
 
 // Init
 document.addEventListener('DOMContentLoaded', ()=>{
-  // Load data
   loadPersisted();
 
   // Tabs
@@ -224,22 +216,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Filters
   $$('.chip').forEach(c=> c.addEventListener('click', ()=>{ $$('.chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); applyFilter(c.dataset.filter);} ));
 
-  // Feed setup
+  // Feed
   FEED = Array.from({length:10}, (_,i)=>makeTask(i+1));
   renderFeed(FEED);
   $('#loadMore').addEventListener('click', ()=> addMoreToFeed(6));
   setInterval(()=> addMoreToFeed(1), 8000);
 
-  // Runner toggle
-  const runnerBtn = $('#toggleRunner');
-  function renderRunner(){
-    runnerBtn.textContent = flags.runner ? 'ON' : 'OFF';
-    renderFeed(FEED);
-  }
-  runnerBtn.addEventListener('click', ()=>{ flags.runner = !flags.runner; saveFlags(); renderRunner(); });
-  renderRunner();
-
-  // Segmented controls: support click + touchstart
+  // Segmented controls
   function wireSegmented(id, cb){
     const seg = $(id);
     ['click','touchstart'].forEach(evt=> seg.addEventListener(evt, (e)=>{
@@ -299,7 +282,5 @@ document.addEventListener('DOMContentLoaded', ()=>{
     $('#nameDisplay').textContent = nv.trim().slice(0,30) || cur; saveProfile();
   });
 
-  // Periodic toasts + stats
   periodicToasts(); updateStats();
 });
-
