@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>DoIt4Me — Prototype</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="phone-frame">
+    <header>
+      <div class="brand">
+        <div class="dot"></div>
+        <span>DoIt4Me</span>
+      </div>
+      <div class="slogan">Chiedi. Fatto.</div>
+    </header>
+
+    <main id="screen-home" class="screen active">
+      <h1>Cosa vuoi che facciamo per te?</h1>
+      <div class="composer">
+        <textarea id="requestText" placeholder="Es. Porta 10 palloncini rossi a Via Roma 12 entro 30 min"></textarea>
+        <button id="sendBtn" class="primary">INVIA</button>
+      </div>
+
+      <section class="feed">
+        <div class="feed-title">Top Task dalla community</div>
+        <div id="feedList" class="feed-list"></div>
+      </section>
+    </main>
+
+    <main id="screen-wait" class="screen">
+      <div class="wait-wrap">
+        <div class="pulse"></div>
+        <div class="wait-text">Stiamo trovando chi lo fa per te…</div>
+        <div class="wait-sub">~ <span id="etaSec">20</span> sec</div>
+      </div>
+      <button id="cancelWait" class="ghost">Annulla</button>
+    </main>
+
+    <main id="screen-offer" class="screen">
+      <h2>Abbiamo trovato un'offerta</h2>
+      <div id="offerCard" class="offer-card"></div>
+      <div class="offer-actions">
+        <button id="declineBtn" class="ghost">❌ Annulla</button>
+        <button id="acceptBtn" class="primary">✅ Accetta</button>
+      </div>
+    </main>
+
+    <main id="screen-tracking" class="screen">
+      <h2>Tracking</h2>
+      <div class="timeline">
+        <div class="step" id="step1">
+          <div class="bullet"></div>
+          <div class="label">In preparazione</div>
+        </div>
+        <div class="step" id="step2">
+          <div class="bullet"></div>
+          <div class="label">In viaggio</div>
+        </div>
+        <div class="step" id="step3">
+          <div class="bullet"></div>
+          <div class="label">Completato</div>
+        </div>
+      </div>
+      <div class="tracking-meta" id="trackingMeta"></div>
+      <div class="share">
+        <button id="shareBtn" class="outline">Condividi</button>
+      </div>
+      <button id="newTaskBtn" class="ghost">Fallo anche tu</button>
+    </main>
+
+    <footer>
+      <button class="tab-btn active" data-tab="home">Home</button>
+      <button class="tab-btn" data-tab="tasks">Task</button>
+      <button class="tab-btn" data-tab="profile">Profilo</button>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
