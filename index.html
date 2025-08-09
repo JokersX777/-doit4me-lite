@@ -3,80 +3,254 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>DoIt4Me — Prototype</title>
+  <title>DoIt4Me — v0.5.3a</title>
+  <meta name="theme-color" content="#2563eb"/>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="DoIt4Me">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="phone-frame">
-    <header>
-      <div class="brand">
-        <div class="dot"></div>
-        <span>DoIt4Me</span>
-      </div>
-      <div class="slogan">Chiedi. Fatto.</div>
-    </header>
+  <div class="appbar">DoIt4Me <span class="tagline">Chiedi. Fai fare. Fatto.</span></div>
 
-    <main id="screen-home" class="screen active">
-      <h1>Cosa vuoi che facciamo per te?</h1>
-      <div class="composer">
-        <textarea id="requestText" placeholder="Es. Porta 10 palloncini rossi a Via Roma 12 entro 30 min"></textarea>
-        <button id="sendBtn" class="primary">INVIA</button>
-      </div>
+  <main id="home" class="screen active">
+    <div class="filters">
+      <button class="chip active" data-filter="all" type="button">Tutti</button>
+      <button class="chip" data-filter="near" type="button">Vicino a me</button>
+      <button class="chip" data-filter="paid" type="button">Più pagati</button>
+      <button class="chip" data-filter="urgent" type="button">Urgenti</button>
+    </div>
+    <div id="feed" class="feed"></div>
+    <button id="loadMore" class="ghost wide" type="button">Carica altri</button>
+  </main>
 
-      <section class="feed">
-        <div class="feed-title">Top Task dalla community</div>
-        <div id="feedList" class="feed-list"></div>
-      </section>
-    </main>
+  <main id="tasks" class="screen">
+    <section class="card form">
+      <h2>+ Nuova richiesta</h2>
 
-    <main id="screen-wait" class="screen">
-      <div class="wait-wrap">
-        <div class="pulse"></div>
-        <div class="wait-text">Stiamo trovando chi lo fa per te…</div>
-        <div class="wait-sub">~ <span id="etaSec">20</span> sec</div>
-      </div>
-      <button id="cancelWait" class="ghost">Annulla</button>
-    </main>
-
-    <main id="screen-offer" class="screen">
-      <h2>Abbiamo trovato un'offerta</h2>
-      <div id="offerCard" class="offer-card"></div>
-      <div class="offer-actions">
-        <button id="declineBtn" class="ghost">❌ Annulla</button>
-        <button id="acceptBtn" class="primary">✅ Accetta</button>
-      </div>
-    </main>
-
-    <main id="screen-tracking" class="screen">
-      <h2>Tracking</h2>
-      <div class="timeline">
-        <div class="step" id="step1">
-          <div class="bullet"></div>
-          <div class="label">In preparazione</div>
+      <div class="row two">
+        <div>
+          <div class="lbl">Tipo task</div>
+          <div class="segmented" id="typeSeg">
+            <button class="seg on" data-type="physical" type="button">Fisico</button>
+            <button class="seg" data-type="digital" type="button">Digitale</button>
+          </div>
         </div>
-        <div class="step" id="step2">
-          <div class="bullet"></div>
-          <div class="label">In viaggio</div>
-        </div>
-        <div class="step" id="step3">
-          <div class="bullet"></div>
-          <div class="label">Completato</div>
+        <div>
+          <label>Visibilità
+            <select id="reqVis">
+              <option value="public" selected>Pubblico</option>
+              <option value="private" disabled>Privato (presto)</option>
+            </select>
+          </label>
         </div>
       </div>
-      <div class="tracking-meta" id="trackingMeta"></div>
-      <div class="share">
-        <button id="shareBtn" class="outline">Condividi</button>
-      </div>
-      <button id="newTaskBtn" class="ghost">Fallo anche tu</button>
-    </main>
 
-    <footer>
-      <button class="tab-btn active" data-tab="home">Home</button>
-      <button class="tab-btn" data-tab="tasks">Task</button>
-      <button class="tab-btn" data-tab="profile">Profilo</button>
-    </footer>
+      <label>Descrizione
+        <input id="reqText" placeholder="Es. Porta 10 palloncini rossi a Via Roma 12 entro 30 min">
+      </label>
+
+      <div class="row">
+        <label>Budget (facoltativo)
+          <input id="reqBudget" inputmode="decimal" placeholder="es. €15">
+        </label>
+        <label>Quando lo vuoi?
+          <input id="reqEta" placeholder="es. entro 30 min">
+        </label>
+      </div>
+
+      <div id="physicalFields" class="subform">
+        <div class="row">
+          <label>Zona / indirizzo approssimativo
+            <input id="reqArea" placeholder="es. Via Roma, Milano">
+          </label>
+          <label>Raggio (km)
+            <input id="reqRadius" inputmode="decimal" placeholder="es. 3">
+          </label>
+        </div>
+        <label>Fascia oraria
+          <input id="reqSlot" placeholder="es. 15:00–17:00">
+        </label>
+      </div>
+
+      <div id="digitalFields" class="subform hidden">
+        <label>Obiettivo / brief
+          <input id="reqGoal" placeholder="es. Impagina un volantino A5 fronte/retro">
+        </label>
+        <label>Formato di consegna
+          <input id="reqFormat" placeholder="es. PDF + PNG 1080x1080">
+        </label>
+      </div>
+
+      <div class="row two">
+        <div>
+          <div class="lbl">Modalità</div>
+          <div class="segmented" id="modeSeg">
+            <button class="seg on" data-mode="bids" type="button">Richiedi offerte</button>
+            <button class="seg" data-mode="instant" type="button">Accetta subito</button>
+          </div>
+        </div>
+        <div>
+          <label>Urgenza
+            <select id="reqUrgency">
+              <option value="now">Ora</option>
+              <option value="today" selected>Oggi</option>
+              <option value="week">Questa settimana</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="quick-templates">
+        <span>Suggerimenti:</span>
+        <button class="chip small" data-tpl="delivery" type="button">Consegna</button>
+        <button class="chip small" data-tpl="buy" type="button">Acquisto</button>
+        <button class="chip small" data-tpl="digital" type="button">Digitale</button>
+        <button class="chip small" data-tpl="other" type="button">Altro</button>
+      </div>
+
+      <div class="escrow-hint">🔒 Pagamento bloccato (escrow) e rilasciato al completamento.</div>
+
+      <button id="send" class="primary" type="button">INVIA RICHIESTA</button>
+      <div id="hint" class="hint">Stima e offerta arrivano in pochi secondi.</div>
+    </section>
+
+    <h3>I miei task</h3>
+    <div id="myTasks" class="mytasks empty">
+      <div class="empty-state">
+        Nessun task ancora. Crea una richiesta con il pulsante qui sopra.
+      </div>
+    </div>
+  </main>
+
+  <main id="profile" class="screen">
+    <section class="card">
+      <h2>Profilo</h2>
+      <div class="profile-row">
+        <button id="avatarBtn" class="avatar big tap" title="Cambia avatar" type="button">🧑‍💼</button>
+        <div class="name-wrap">
+          <div id="nameDisplay" class="name">Utente DoIt4Me</div>
+          <button id="editName" class="ghost xsmall tap" type="button">Modifica nome</button>
+        </div>
+      </div>
+
+      <div class="row two">
+        <div class="pill">
+          <div class="pill-title">Modalità Runner (mock)</div>
+          <button id="toggleRunner" class="outline small sameH" type="button">OFF</button>
+        </div>
+        <div class="pill">
+          <div class="pill-title">Pagamento • Stripe sandbox (mock)</div>
+          <button class="outline small sameH" type="button">Gestisci</button>
+        </div>
+      </div>
+
+      <div class="stats pills">
+        <div class="pill statP">
+          <div class="lbl">Task completati</div>
+          <div class="num" id="statTasks">0</div>
+        </div>
+        <div class="pill statP">
+          <div class="lbl">Valore gestito</div>
+          <div class="num" id="statEarn">€0</div>
+        </div>
+        <div class="pill statP">
+          <div class="lbl">Livello</div>
+          <div class="num" id="statLvl">1</div>
+        </div>
+      </div>
+
+      <div class="version">v0.5.3a • PWA</div>
+    </section>
+  </main>
+
+  <!-- Modals -->
+  <div id="modalWait" class="modal">
+    <div class="modal-card">
+      <div class="pulse"></div>
+      <div class="modal-title">Stiamo trovando chi lo fa per te…</div>
+      <div class="modal-sub">~ <span id="waitSec">12</span> sec</div>
+      <button id="cancelWait" class="ghost small" type="button">Annulla</button>
+    </div>
   </div>
 
+  <div id="modalOffer" class="modal">
+    <div class="modal-card">
+      <h3>Offerta trovata</h3>
+      <div id="offerCard" class="offer"></div>
+      <div class="escrow-banner">🔒 Pagamento pre-autorizzato. Si sblocca al completamento.</div>
+      <div class="offer-actions">
+        <button id="decline" class="ghost" type="button">✖️ Annulla</button>
+        <button id="accept" class="primary" type="button">✅ Accetta</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalTrack" class="modal">
+    <div class="modal-card">
+      <h3>Tracking</h3>
+      <ul class="steps">
+        <li id="st1">In preparazione</li>
+        <li id="st2">In viaggio</li>
+        <li id="st3">Completato</li>
+      </ul>
+      <div id="trackTimer" class="timer"></div>
+      <div id="trackMeta" class="track-meta"></div>
+      <div class="track-actions">
+        <button id="openChat" class="outline small" type="button">Apri chat</button>
+        <button id="shareDone" class="ghost small" type="button">Condividi</button>
+        <button id="closeTrack" class="primary small" type="button">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalChat" class="modal">
+    <div class="modal-card chat">
+      <h3>Chat</h3>
+      <div id="chatLog" class="chat-log"></div>
+      <div class="chat-input">
+        <input id="chatText" placeholder="Scrivi un messaggio…">
+        <button id="chatSend" class="primary small" type="button">Invia</button>
+      </div>
+      <button id="closeChat" class="ghost small" type="button">Chiudi chat</button>
+    </div>
+  </div>
+
+  <div id="modalRate" class="modal">
+    <div class="modal-card">
+      <h3>Valuta l’esperienza</h3>
+      <div class="stars" id="rateStars" data-val="5">
+        <button class="star on" type="button">★</button>
+        <button class="star on" type="button">★</button>
+        <button class="star on" type="button">★</button>
+        <button class="star on" type="button">★</button>
+        <button class="star on" type="button">★</button>
+      </div>
+      <label>Recensione (facoltativo)
+        <input id="rateText" placeholder="Es. Puntuale e gentile">
+      </label>
+      <div class="row two">
+        <button id="addTip" class="outline" type="button">Aggiungi mancia</button>
+        <button id="sendRate" class="primary" type="button">Invia</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" class="toasts"></div>
+
+  <nav class="tabbar">
+    <button class="tab active" data-tab="home" type="button">Home</button>
+    <button class="tab" data-tab="tasks" type="button">Task</button>
+    <button class="tab" data-tab="profile" type="button">Profilo</button>
+  </nav>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    }
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
